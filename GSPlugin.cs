@@ -6,6 +6,7 @@ namespace GameSaves {
     [BepInPlugin (PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class GSPlugin : BaseUnityPlugin {
         internal static ManualLogSource LogInstance = null;
+        public const string SAVE_FILE_NAME = "savefile.yaml";
 
         private void Awake () {
             // Plugin startup logic
