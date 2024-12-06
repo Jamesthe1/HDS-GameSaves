@@ -95,6 +95,11 @@ namespace GameSaves {
         }
 
         private static void WriteFlightMember (Savefile savefile, string unitTypeKey, Flight flight) {
+            SpawnPoint[] spawns = flight.GetComponentsInChildren<SpawnPoint> ();
+            // No flights available
+            if (spawns.Length == 0)
+                return;
+
             savefile.BeginBlock (unitTypeKey);
 
             foreach (SpawnPoint spawnPoint in flight.GetComponentsInChildren<SpawnPoint> ()) {
