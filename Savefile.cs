@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+// TODO: Add loading functions, new patcher class for loading
 namespace GameSaves {
     public class Savefile {
         private FileStream fs;
