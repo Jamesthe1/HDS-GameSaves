@@ -107,7 +107,7 @@ namespace GameSaves {
                     callsign = spawnPoint.unit.callsign;
                     xp = spawnPoint.unit.experience;
                 }
-                savefile.BeginListEntryBlock ("flightname", callsign);
+                savefile.BeginListEntryBlock ("flightname", $"\"{callsign}\"");
                 savefile.WriteEntry ("flightxp", xp);
                 savefile.EndBlock ();
             }
