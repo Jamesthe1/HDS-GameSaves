@@ -105,7 +105,7 @@ namespace GameSaves {
         public ResultUnion ReadFile () {
             ResultUnion result = new ResultUnion ();
             result.table = new Dictionary<string, ResultUnion> ();
-            List<KeyValuePair<string, BlockType>> blocks = [new KeyValuePair<string, BlockType> ("", BlockType.Table)];
+            List<KeyValuePair<string, BlockType>> blocks = new List<KeyValuePair<string, BlockType>> {new KeyValuePair<string, BlockType> ("", BlockType.Table)};
             ResultUnion currentData = result;
 
             ResultUnion GetCurrentData () {
