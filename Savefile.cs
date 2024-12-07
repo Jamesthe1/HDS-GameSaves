@@ -130,7 +130,7 @@ namespace GameSaves {
 
                 if (line.Contains ("- ")) {
                     if (block.Value != BlockType.Unset && block.Value != BlockType.List)
-                        throw new Exception ($"List in a non-list type is not allowed: {line} (line {i})");
+                        throw new Exception ($"List in a non-list type is not allowed: {line} (line {i + 1})");
 
                     if (block.Value == BlockType.Unset) {
                         blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.List);
@@ -182,7 +182,7 @@ namespace GameSaves {
                     currentData.list.Add (entry);
                 }
                 else {
-                    throw new Exception ($"A line did not satisfy any condition: {line} (line {i})");
+                    throw new Exception ($"A line did not satisfy any condition: {line} (line {i + 1})");
                 }
             }
 
