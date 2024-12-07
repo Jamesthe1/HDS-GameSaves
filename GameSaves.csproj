@@ -4,7 +4,7 @@
     <TargetFramework>net35</TargetFramework>
     <AssemblyName>GameSaves</AssemblyName>
     <Description>Uses an external file instead of the registry to save your game.</Description>
-    <Version>0.0.1</Version>
+    <Version>0.5.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

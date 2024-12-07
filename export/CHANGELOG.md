@@ -1,2 +1,2 @@
-# 1.0.0
-First release
+# 0.5.0
+First release, saving and loading work. No wipe method yet.
