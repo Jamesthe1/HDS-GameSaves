@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 using HarmonyLib;
 
 namespace GameSaves {
@@ -8,6 +9,8 @@ namespace GameSaves {
     class LoadPatcher {
         static bool Prefix (string prefsKey, Faction __instance) {
             try {
+                Debug.Log ("<color=orange>::: BEGIN FILE LOAD :::</color>");
+
                 Savefile savefile = new Savefile (false);
                 Savefile.ResultUnion result = savefile.ReadFile ();
 
@@ -61,6 +64,7 @@ namespace GameSaves {
                 // Veterans are patched in a separate class, since this happens in a separate step
 
                 __instance.SetCurrentfleetFromBlueprints ();
+                Debug.Log ("<color=orange>::: END FILE LOAD :::</color>");
             }
             catch (IOException ioe) {
                 GSPlugin.LogInstance.LogWarning ($"Could not load savefile (using registry): {ioe.Message} (this can be safely ignored if this is your first time using the mod)");
