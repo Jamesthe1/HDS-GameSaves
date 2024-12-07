@@ -94,6 +94,7 @@ namespace GameSaves {
                 config.weaponAssignments[i] = assignment;
             }
 
+            config.unitModifiers = new List<UnitModifier> ();
             foreach (var listItem in tagTable["assignedmodifiers"].list) {
                 if (listItem.strResult == "NONE") continue;
 
