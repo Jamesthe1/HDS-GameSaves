@@ -40,7 +40,8 @@
     </Reference>
   </ItemGroup>
   
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <Target Name="PostBuild" BeforeTargets="PostBuildEvent" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Exec Command="robocopy . export icon.png&#xD;&#xA;echo {&quot;name&quot;: &quot;$(AssemblyName)&quot;, &quot;description&quot;: &quot;$(Description)&quot;, &quot;version_number&quot;: &quot;$(Version)&quot;, &quot;dependencies&quot;: [], &quot;website_url&quot;: &quot;https://github.com/Jamesthe1/HDS-GameSaves&quot;} &gt; export\manifest.json&#xD;&#xA;if %25errorlevel%25 leq 4 exit 0&#xD;&#xA;else exit %25errorlevel%25" />
+    <Exec Command="7z a -tzip $(AssemblyName).zip .\export\*" />
   </Target>
 </Project>
