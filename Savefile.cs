@@ -1,11 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 // TODO: Add loading functions, new patcher class for loading
 namespace GameSaves {
     public class Savefile {
+        [StructLayout (LayoutKind.Explicit)]
+        public class ResultUnion {
+            [FieldOffset (0)]
+            public int intResult;
+            [FieldOffset (0)]
+            public string strResult;
+            [FieldOffset (0)]
+            public List<ResultUnion> list;
+            [FieldOffset (0)]
+            public Dictionary<string, ResultUnion> table;
+        }
+
         private FileStream fs;
         private int indentation = 0;
 
@@ -80,6 +93,99 @@ namespace GameSaves {
                 tabspace = false;
             }
             indentation >>= 1;              // Fast division by 2 using bitshift
+            return result;
+        }
+
+        enum BlockType {
+            Unset,
+            Table,
+            List
+        }
+
+        public ResultUnion ReadFile () {
+            ResultUnion result = new ResultUnion ();
+            result.table = new Dictionary<string, ResultUnion> ();
+            List<KeyValuePair<string, BlockType>> blocks = [new KeyValuePair<string, BlockType> ("", BlockType.Table)];
+            ResultUnion currentData = result;
+
+            ResultUnion GetCurrentData () {
+                ResultUnion data = result;
+                for (int i = 1; i < blocks.Count; i++) {
+                    if (blocks[i-1].Value == BlockType.Table)
+                        data = data.table[blocks[i].Key];
+                    else if (blocks[i-1].Value == BlockType.List)
+                        data = data.list.GetLast ();    // We will always be at the end of the array given the circumstances
+                }
+                return data;
+            }
+
+            for (int i = 0; i < int.MaxValue; i++) {
+                string line = ReadLine ();
+
+                if (blocks.Count > indentation + 1) {
+                    blocks.RemoveRange (indentation + 1, blocks.Count - indentation - 1);
+                    result = GetCurrentData ();
+                }
+                KeyValuePair<string, BlockType> block = blocks.GetLast ();
+
+                if (line.Contains ("- ")) {
+                    if (block.Value != BlockType.Unset && block.Value != BlockType.List)
+                        throw new Exception ($"List in a non-list type is not allowed: {line} (line {i})");
+
+                    if (block.Value == BlockType.Unset) {
+                        blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.List);
+                        block = blocks.GetLast ();
+                        currentData.list = new List<ResultUnion> ();
+                    }
+                    line = line.Remove (0, 2);  // Remove the leading dash
+                }
+
+                // This is not made with an else to the above dash, in case we have a list of tables
+                if (line.Contains (":")) {
+                    if (block.Value == BlockType.Unset) {
+                        blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.Table);
+                        block = blocks.GetLast ();
+                        currentData.table = new Dictionary<string, ResultUnion> ();
+                    }
+                    else if (block.Value == BlockType.List) {
+                        // This section should safely move us into a new table inside the list entry
+                        blocks.Add (new KeyValuePair<string, BlockType> ("", BlockType.Table));
+                        block = blocks.GetLast ();
+
+                        ResultUnion tableEntry = new ResultUnion ();
+                        tableEntry.table = new Dictionary<string, ResultUnion> ();
+                        currentData.list.Add (tableEntry);
+                        currentData = tableEntry;
+                    }
+
+                    string[] kv = line.Split (':');
+                    ResultUnion data = new ResultUnion ();
+                    if (kv[1].Length > 0) {
+                        kv[1] = kv[1].Substring (1).RemoveChars ('"');  // Remove trailing space, and any double-quotes thereafter
+                        if (int.TryParse(kv[1], out int intResult))
+                            data.intResult = intResult;
+                        else
+                            data.strResult = kv[1];
+                    }
+                    currentData.table.Add (kv[0], data);
+
+                    if (kv[1].Length == 0) {
+                        // We aren't sure what this will be yet, so leave it for the next line to decide
+                        blocks.Add (new KeyValuePair<string, BlockType> (kv[0], BlockType.Unset));
+                        block = blocks.GetLast ();
+                        currentData = data;
+                    }
+                }
+                else if (block.Value == BlockType.List) {
+                    ResultUnion entry = new ResultUnion ();
+                    entry.strResult = line.RemoveChars ('"');   // Just in case there are any here
+                    currentData.list.Add (entry);
+                }
+                else {
+                    throw new Exception ($"A line did not satisfy any condition: {line} (line {i})");
+                }
+            }
+
             return result;
         }
     }
