@@ -8,7 +8,7 @@ namespace GameSaves {
     class SavePatcher {
         static bool Prefix (string prefsKey, bool saveVeteranUnitData, Faction __instance) {
             try {
-                Savefile savefile = new Savefile (prefsKey, true);
+                Savefile savefile = new Savefile (true);
 
                 Debug.Log ("<color=orange>::: BEGIN FILE SAVE :::</color>");
                 Messenger<Faction, Savefile>.Broadcast ("OnFactionFileSaving", __instance, savefile);
