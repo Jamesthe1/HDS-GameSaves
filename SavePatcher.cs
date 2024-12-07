@@ -26,10 +26,12 @@ namespace GameSaves {
                     savefile.WriteListEntry (weapon.name.ToLower ());
                 savefile.EndBlock ();
 
+                savefile.BeginBlock ("configs");
                 WriteUnitConfig (savefile, "fighter", __instance);
                 WriteUnitConfig (savefile, "destroyer", __instance);
                 WriteUnitConfig (savefile, "frigate", __instance);
                 WriteUnitConfig (savefile, "battleship", __instance);
+                savefile.EndBlock ();
 
                 if (saveVeteranUnitData)
                     WriteVeterans (savefile, PlayerFleet.Instance);
@@ -39,9 +41,9 @@ namespace GameSaves {
 
                 savefile.WriteStringList ("currentfleet", __instance.currentFleetBlueprintNames);
             
-                Debug.Log ("<color=orange>::: END SAVE :::</color>");
+                Debug.Log ("<color=orange>::: END FILE SAVE :::</color>");
             } catch (IOException ioe) {
-                GSPlugin.LogInstance.LogError ($"Assuming default save behavior; save file could not be opened: {ioe.Message}");
+                GSPlugin.LogInstance.LogError ($"Saving to registry instead; save file could not be opened: {ioe.Message}");
                 return true;
             }
 
