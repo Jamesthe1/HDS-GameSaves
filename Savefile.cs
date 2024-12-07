@@ -82,13 +82,16 @@ namespace GameSaves {
             bool tabspace = true;
             indentation = 0;
             for (int i = 0; i < int.MaxValue; i++) {    // Just in case we wind up in an infinite loop, we'll have a stopping point
-                char c = (char)fs.ReadByte ();
+                int state = fs.ReadByte ();
+                if (state == -1) break;                 // EOF check must be done here, otherwise char will never be -1
+
+                char c = (char)state;
+                if (state == -1) break;
                 if (c == ' ' && tabspace) {
                     indentation++;
                     continue;
                 }
                 if (c == '\n') break;
-                if (c == -1) break;         // EOF
                 result += c;
                 tabspace = false;
             }
@@ -121,10 +124,12 @@ namespace GameSaves {
 
             for (int i = 0; i < int.MaxValue; i++) {
                 string line = ReadLine ();
+                if (line.Length == 0)
+                    break;  // EOF reached
 
                 if (blocks.Count > indentation + 1) {
                     blocks.RemoveRange (indentation + 1, blocks.Count - indentation - 1);
-                    result = GetCurrentData ();
+                    currentData = GetCurrentData ();
                 }
                 KeyValuePair<string, BlockType> block = blocks.GetLast ();
 
@@ -178,7 +183,7 @@ namespace GameSaves {
                 }
                 else if (block.Value == BlockType.List) {
                     ResultUnion entry = new ResultUnion ();
-                    entry.strResult = line.RemoveChars ('"');   // Just in case there are any here
+                    entry.strResult = line.RemoveChars ('"');   // Just in case there are any double-quotes here
                     currentData.list.Add (entry);
                 }
                 else {
