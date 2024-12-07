@@ -1,4 +1,6 @@
 bin/
 obj/
 export/plugins/
+export/icon.png
+export/manifest.json
 .vscode/
