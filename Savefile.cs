@@ -203,5 +203,12 @@ namespace GameSaves {
 
             return result;
         }
+
+        public static void DeleteFile () {
+            string path = GetFilePath ();
+            if (!File.Exists (path))
+                throw new IOException ("Savefile does not exist for deletion");
+            File.Delete (path);
+        }
     }
 }
