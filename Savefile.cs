@@ -109,10 +109,80 @@ namespace GameSaves {
             List
         }
 
-        public ResultUnion ReadFile () {
+        private bool ParseLine (int lineNumber, ref List<KeyValuePair<string, BlockType>> blocks, ref ResultUnion currentData, Func<ResultUnion> GetCurrentData) {
+            string line = ReadLine ();
+            if (line.Length == 0)
+                return false;   // EOF reached
+
+            if (blocks.Count > indentation + 1) {
+                blocks.RemoveRange (indentation + 1, blocks.Count - indentation - 1);
+                currentData = GetCurrentData ();
+            }
+            KeyValuePair<string, BlockType> block = blocks.GetLast ();
+
+            if (line.Contains ("- ")) {
+                if (block.Value != BlockType.Unset && block.Value != BlockType.List)
+                    throw new Exception ($"List in a non-list type is not allowed: {line} (line {lineNumber})");
+
+                if (block.Value == BlockType.Unset) {
+                    blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.List);
+                    block = blocks.GetLast ();
+                    currentData.list = new List<ResultUnion> ();
+                }
+                line = line.Remove (0, 2);  // Remove the leading dash
+            }
+
+            // This is not made with an else to the above dash, in case we have a list of tables
+            if (line.Contains (":")) {
+                if (block.Value == BlockType.Unset) {
+                    blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.Table);
+                    block = blocks.GetLast ();
+                    currentData.table = new Dictionary<string, ResultUnion> ();
+                }
+                else if (block.Value == BlockType.List) {
+                    // This section should safely move us into a new table inside the list entry
+                    blocks.Add (new KeyValuePair<string, BlockType> ("", BlockType.Table));
+                    block = blocks.GetLast ();
+
+                    ResultUnion tableEntry = new ResultUnion ();
+                    tableEntry.table = new Dictionary<string, ResultUnion> ();
+                    currentData.list.Add (tableEntry);
+                    currentData = tableEntry;
+                }
+
+                string[] kv = line.Split (':');
+                ResultUnion data = new ResultUnion ();
+                if (kv[1].Length > 0) {
+                    kv[1] = kv[1].Substring (1).RemoveChars ('"');  // Remove trailing space, and any double-quotes thereafter
+                    if (int.TryParse(kv[1], out int intResult))
+                        data.intResult = intResult;
+                    else
+                        data.strResult = kv[1];
+                }
+                currentData.table.Add (kv[0], data);
+
+                if (kv[1].Length == 0) {
+                    // We aren't sure what this will be yet, so leave it for the next line to decide
+                    blocks.Add (new KeyValuePair<string, BlockType> (kv[0], BlockType.Unset));
+                    block = blocks.GetLast ();
+                    currentData = data;
+                }
+            }
+            else if (block.Value == BlockType.List) {
+                ResultUnion entry = new ResultUnion ();
+                entry.strResult = line.RemoveChars ('"');   // Just in case there are any double-quotes here
+                currentData.list.Add (entry);
+            }
+            else {
+                throw new Exception ($"A line did not satisfy any condition: {line} (line {lineNumber})");
+            }
+            return true;
+        }
+
+        public ResultUnion ParseFile () {
             ResultUnion result = new ResultUnion ();
             result.table = new Dictionary<string, ResultUnion> ();
-            List<KeyValuePair<string, BlockType>> blocks = new List<KeyValuePair<string, BlockType>> {new KeyValuePair<string, BlockType> ("", BlockType.Table)};
+            var blocks = new List<KeyValuePair<string, BlockType>> {new KeyValuePair<string, BlockType> ("", BlockType.Table)};
             ResultUnion currentData = result;
 
             ResultUnion GetCurrentData () {
@@ -127,72 +197,8 @@ namespace GameSaves {
             }
 
             for (int i = 0; i < int.MaxValue; i++) {
-                string line = ReadLine ();
-                if (line.Length == 0)
-                    break;  // EOF reached
-
-                if (blocks.Count > indentation + 1) {
-                    blocks.RemoveRange (indentation + 1, blocks.Count - indentation - 1);
-                    currentData = GetCurrentData ();
-                }
-                KeyValuePair<string, BlockType> block = blocks.GetLast ();
-
-                if (line.Contains ("- ")) {
-                    if (block.Value != BlockType.Unset && block.Value != BlockType.List)
-                        throw new Exception ($"List in a non-list type is not allowed: {line} (line {i + 1})");
-
-                    if (block.Value == BlockType.Unset) {
-                        blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.List);
-                        block = blocks.GetLast ();
-                        currentData.list = new List<ResultUnion> ();
-                    }
-                    line = line.Remove (0, 2);  // Remove the leading dash
-                }
-
-                // This is not made with an else to the above dash, in case we have a list of tables
-                if (line.Contains (":")) {
-                    if (block.Value == BlockType.Unset) {
-                        blocks[blocks.Count - 1] = new KeyValuePair<string, BlockType> (block.Key, BlockType.Table);
-                        block = blocks.GetLast ();
-                        currentData.table = new Dictionary<string, ResultUnion> ();
-                    }
-                    else if (block.Value == BlockType.List) {
-                        // This section should safely move us into a new table inside the list entry
-                        blocks.Add (new KeyValuePair<string, BlockType> ("", BlockType.Table));
-                        block = blocks.GetLast ();
-
-                        ResultUnion tableEntry = new ResultUnion ();
-                        tableEntry.table = new Dictionary<string, ResultUnion> ();
-                        currentData.list.Add (tableEntry);
-                        currentData = tableEntry;
-                    }
-
-                    string[] kv = line.Split (':');
-                    ResultUnion data = new ResultUnion ();
-                    if (kv[1].Length > 0) {
-                        kv[1] = kv[1].Substring (1).RemoveChars ('"');  // Remove trailing space, and any double-quotes thereafter
-                        if (int.TryParse(kv[1], out int intResult))
-                            data.intResult = intResult;
-                        else
-                            data.strResult = kv[1];
-                    }
-                    currentData.table.Add (kv[0], data);
-
-                    if (kv[1].Length == 0) {
-                        // We aren't sure what this will be yet, so leave it for the next line to decide
-                        blocks.Add (new KeyValuePair<string, BlockType> (kv[0], BlockType.Unset));
-                        block = blocks.GetLast ();
-                        currentData = data;
-                    }
-                }
-                else if (block.Value == BlockType.List) {
-                    ResultUnion entry = new ResultUnion ();
-                    entry.strResult = line.RemoveChars ('"');   // Just in case there are any double-quotes here
-                    currentData.list.Add (entry);
-                }
-                else {
-                    throw new Exception ($"A line did not satisfy any condition: {line} (line {i + 1})");
-                }
+                if (!ParseLine (i+1, ref blocks, ref currentData, GetCurrentData))
+                    break;
             }
 
             return result;

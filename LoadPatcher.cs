@@ -12,7 +12,7 @@ namespace GameSaves {
                 Debug.Log ("<color=orange>::: BEGIN FILE LOAD :::</color>");
 
                 Savefile savefile = new Savefile (false);
-                Savefile.ResultUnion result = savefile.ReadFile ();
+                Savefile.ResultUnion result = savefile.ParseFile ();
 
                 int tempInt;
 

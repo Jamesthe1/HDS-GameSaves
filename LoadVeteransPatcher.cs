@@ -10,7 +10,7 @@ namespace GameSaves {
             if (pf == null) return true;     // I do hope their programming practices have improved in this regard...
             try {
                 Savefile savefile = new Savefile (false);
-                Savefile.ResultUnion result = savefile.ReadFile ();
+                Savefile.ResultUnion result = savefile.ParseFile ();
 
                 List<EmpireFlight> blankFlights = Globals.Instance.blankEmpireFlights;
                 for (int i = 0; i < blankFlights.Count && i < pf.activeFlights.Count; i++)
