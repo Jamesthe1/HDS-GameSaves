@@ -22,12 +22,16 @@ namespace GameSaves {
         private FileStream fs;
         private int indentation = 0;
 
+        public static string GetFilePath () {
+            return Application.persistentDataPath + "/" + GSPlugin.SAVE_FILE_NAME;
+        }
+
         /// <summary>
         /// Creates a class for the save file.
         /// </summary>
         /// <exception cref="IOException" />
         public Savefile (bool overwrite) {
-            string path = Application.persistentDataPath + "/" + GSPlugin.SAVE_FILE_NAME;
+            string path = GetFilePath ();
             if (File.Exists (path) && overwrite) {
                 File.Delete (path);
             }
